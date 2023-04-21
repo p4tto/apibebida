@@ -6,10 +6,6 @@ const Usuario = database.define('usuarios',{
         type: DataTypes.STRING,
         allowNull: false
     },
-    senha:{
-        type: DataTypes.STRING,
-        allowNull: false
-    },
     moedas:{
         type: DataTypes.INTEGER,
         allowNull: false
