@@ -65,13 +65,17 @@ app.post('/api/adicionarMoeda',async (req,res)=>{
 app.get('/api/buscarMoeda/:nomeUsuario',async (req, res)=>{
     try{
         let nomeUsuario = req.params.nomeUsuario
-        let [[usuario]] = await sequelize.query(`SELECT nome, moeda FROM usuarios WHERE nome = ${nomeUsuario}`)
-        console.log(usuario)
-        if(usuario.length > 0){
-            res.send(usuario)
-        }else{
-            res.send("Usuário não encontrado")
-        }
+        
+        await sequelize.query(`SELECT nome, moedas FROM usuarios WHERE nome = '${nomeUsuario}'`)
+        .then(([[resultado]])=>{
+            console.log(resultado)
+            if(resultado){
+                res.send(JSON.stringify(resultado))
+            }else{
+                res.send("Usuário não encontrado")
+            }
+        })
+        
 
         
     }catch(error){
@@ -103,7 +107,7 @@ app.get('/api/buscarRanking', async (req,res)=>{
             LIMIT 5`)
         .then(([resultado])=>{
             if(resultado.length > 0){
-                res.send(JSON.stringify(cinco))
+                res.send(JSON.stringify(resultado))
                 res.status(200)
             }else{
                 res.send("Não foram encontrados usuários")
