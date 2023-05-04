@@ -10,18 +10,46 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
+// validar conexão com banco
+sequelize
+  .authenticate({ logging: false })
+  .then(function (err) {
+    console.log("Conectado ao banco de dados.");
+  })
+  .catch(function (err) {
+    console.log(err, "\nNão foi possível se conectar ao banco de dados.");
+    process.exit(1);
+  });
+
 app.post("/api/criaUsuario", async (req, res) => {
   try {
     console.log(req.body);
 
     let nomeUsuario = req.body.nomeUsuario;
 
-    await Usuario.create({ nome: nomeUsuario, moedas: 0 }).then(() => {
-      res.send("ok");
-      res.status(200);
-    });
+    await sequelize
+      .query(`SELECT nome FROM usuarios WHERE nome = '${nomeUsuario}'`)
+      .then(([[resultado]]) => {
+        if (resultado) {
+          res
+            .status(409)
+            .send({ message: `O usuário ${nomeUsuario} já existe.` });
+        } else {
+          try {
+            Usuario.create({ nome: nomeUsuario, moedas: 0 }).then(() => {
+              res.send({
+                status: "ok",
+                message: `Usuário ${nomeUsuario} criado com sucesso!`,
+              });
+              res.status(200);
+            });
+          } catch (error) {
+            res.status(500).send({ message: "Erro" });
+          }
+        }
+      });
   } catch (error) {
-    res.status(500);
+    res.status(500).send({ message: "Erro" });
   }
 });
 
@@ -30,11 +58,20 @@ app.delete("/api/deletaUsuario", (req, res) => {
     let nomeUsuario = req.body.nomeUsuario;
 
     Usuario.findOne({ where: { nome: nomeUsuario } }).then((usuario) => {
-      usuario.destroy();
-      res.send("ok");
+      if (usuario) {
+        usuario.destroy();
+        res.status(200).send({
+          status: "ok",
+          message: `Usuário ${nomeUsuario} deletado com sucesso.`,
+        });
+      } else {
+        res
+          .status(404)
+          .send({ message: `Usuário ${nomeUsuario} não encontrado` });
+      }
     });
   } catch (error) {
-    res.status(500);
+    res.status(500).send({ message: `Erro` });
   }
 });
 
@@ -48,7 +85,7 @@ app.post("/api/adicionarMoeda", async (req, res) => {
         `UPDATE usuarios SET moedas = moedas + ${moedasNovas} WHERE nome = '${nomeUsuario}'`
       )
       .then(() => {
-        res.send("ok");
+        res.send({ message: "ok" });
         res.status(200);
       });
   } catch (error) {
@@ -67,7 +104,7 @@ app.get("/api/buscarMoeda/:nomeUsuario", async (req, res) => {
         if (resultado) {
           res.send(JSON.stringify(resultado));
         } else {
-          res.status(404).send("Usuário não encontrado");
+          res.status(404).send({ message: "Usuário não encontrado" });
           // res.send("Usuário não encontrado")
         }
       });
@@ -85,7 +122,7 @@ app.post("/api/removerMoeda", async (req, res) => {
         `UPDATE usuarios SET moedas = moedas - ${moedasGastas} WHERE nome = '${nomeUsuario}'`
       )
       .then(() => {
-        res.send("ok");
+        res.send({ message: "ok" });
         res.status(200);
       });
   } catch (error) {
@@ -106,7 +143,7 @@ app.get("/api/buscarRanking", async (req, res) => {
           res.send(JSON.stringify(resultado));
           res.status(200);
         } else {
-          res.send("Não foram encontrados usuários");
+          res.send({ message: "Não foram encontrados usuários" });
         }
       });
   } catch (error) {
