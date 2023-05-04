@@ -3,12 +3,24 @@ const app = express();
 const bodyParser = require("body-parser");
 const sequelize = require("./models/Database");
 const Usuario = require("./models/Usuário");
+const cors = require("cors");
+
+// habilita CORS
+app.use(cors());
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 
 // parse application/json
 app.use(bodyParser.json());
+
+app.use(
+  cors({
+    origin: "*",
+    methods: ["*"],
+    allowedHeaders: ["*"],
+  })
+);
 
 // validar conexão com banco
 sequelize
