@@ -27,6 +27,7 @@ sequelize
   .authenticate({ logging: false })
   .then(function (err) {
     console.log("Conectado ao banco de dados.");
+    console.log("Lembre-se de alterar o IP da api no frontend!!!!!");
   })
   .catch(function (err) {
     console.log(err, "\nNão foi possível se conectar ao banco de dados.");
